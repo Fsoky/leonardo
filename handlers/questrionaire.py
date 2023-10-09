@@ -1,9 +1,10 @@
 from aiogram import Router, F
 from aiogram.types import Message
-from aiogram.filters import Command
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 
 from keyboards.builders import form_btn
+from keyboards.reply import main, rmk
 
 from data.database import DataBase
 from utils.states import Form
@@ -12,20 +13,31 @@ from utils.city import check
 router = Router()
 
 
-@router.message(Command("form"))
-async def my_form(message: Message, state: FSMContext):
-    await state.set_state(Form.name)
-    await message.answer(
-        "Отлично, введи своё имя",
-        reply_markup=form_btn(message.from_user.first_name)
-    )
+@router.message(CommandStart())
+async def my_form(message: Message, state: FSMContext, db: DataBase):
+    is_exists = await db.get(message.from_user.id, one=True)
+    if is_exists is not None:
+        data = await db.get(message.from_user.id)
+        usr = data.one()
+        pattern = {
+            "photo": usr.photo,
+            "caption": f"{usr.name} {usr.age}, {usr.city}\n{usr.bio}"
+        }
+
+        await message.answer_photo(**pattern, reply_markup=main)
+    else:
+        await state.set_state(Form.name)
+        await message.answer(
+            "Отлично, введи своё имя",
+            reply_markup=form_btn(message.from_user.first_name)
+        )
 
 
 @router.message(Form.name)
 async def form_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
     await state.set_state(Form.age)
-    await message.answer("Теперь укажи свой возраст")
+    await message.answer("Теперь укажи свой возраст", reply_markup=rmk)
 
 
 @router.message(Form.age)
@@ -74,7 +86,7 @@ async def incorrect_form_sex(message: Message, state: FSMContext):
 async def form_look_for(message: Message, state: FSMContext):
     await state.update_data(look_for=message.text)
     await state.set_state(Form.about)
-    await message.answer("Теперь расскажи о себе")
+    await message.answer("Теперь расскажи о себе", reply_markup=rmk)
 
 
 @router.message(Form.look_for)
@@ -84,29 +96,29 @@ async def incorrect_form_look_for(message: Message, state: FSMContext):
 
 @router.message(Form.about)
 async def form_about(message: Message, state: FSMContext):
-    await state.update_data(about=message.text)
+    await state.update_data(bio=message.text)
     await state.set_state(Form.photo)
     await message.answer("Теперь отправь фото")
 
 
 @router.message(Form.photo, F.photo)
 async def form_photo(message: Message, state: FSMContext, db: DataBase):
-    photo_file_id = message.photo[-1].file_id
-    data = await state.get_data()
-    await state.clear()
+    phid = message.photo[-1].file_id
 
+    data = await state.get_data()
+    data["user_id"] = message.from_user.id
+    data["photo"] = phid
+
+    await db.insert(**data)
+    await state.clear()
 
     frm_text = []
     [
-        frm_text.append(value)
-        for _, value in data.items()
+        frm_text.append(f"{value}")
+        for key, value in data.items()
+        if key not in ["user_id", "photo"]
     ]
-    await db.insert(frm_text)
-
-    await message.answer_photo(
-        photo_file_id,
-        "\n".join(frm_text)
-    )
+    await message.answer_photo(phid,"\n".join(frm_text))
 
 
 @router.message(Form.photo, ~F.photo)
