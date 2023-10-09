@@ -10,12 +10,12 @@ from config_reader import config
 async def main() -> None:
     bot = Bot(config.bot_token.get_secret_value())
     dp = Dispatcher()
-    db = DataBase("users_db.db", "users")
+    db = DataBase()
 
-    await db.create_table()
+    dp.startup.register(db.create) # Создаем БД при запуске бота.
     dp.include_routers(
-        handlers.start.router,
-        handlers.questrionaire.router
+        handlers.questrionaire.router,
+        handlers.bot_messages.router
     )
 
     await bot.delete_webhook(drop_pending_updates=True)
