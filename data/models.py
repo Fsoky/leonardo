@@ -1,11 +1,6 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text
-)
+from sqlalchemy import BigInteger, Text
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -15,12 +10,12 @@ class Base(AsyncAttrs, DeclarativeBase):
 class Users(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=False, unique=True)
-    name = Column(String, nullable=False)
-    age = Column(Integer, nullable=False)
-    city = Column(String, nullable=False)
-    sex = Column(Integer, nullable=False)
-    look_for = Column(Integer, nullable=False)
-    bio = Column(Text, nullable=False)
-    photo = Column(String, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    age: Mapped[int] = mapped_column(nullable=False)
+    city: Mapped[str] = mapped_column(nullable=False)
+    sex: Mapped[int] =  mapped_column(nullable=False)
+    look_for: Mapped[str] = mapped_column(nullable=False)
+    bio: Mapped[str] = mapped_column(Text, nullable=False)
+    photo: Mapped[str] = mapped_column(Text, nullable=False)

@@ -1,4 +1,5 @@
 from . import (
     questrionaire,
-    bot_messages
+    bot_messages,
+    search_user
 )

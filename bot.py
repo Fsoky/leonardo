@@ -3,18 +3,22 @@ from aiogram import Bot, Dispatcher
 
 import handlers
 
+from filters.url_filter import UrlInMessageCheck
 from data.database import DataBase
 from config_reader import config
 
 
 async def main() -> None:
-    bot = Bot(config.bot_token.get_secret_value())
+    bot = Bot(config.bot_token.get_secret_value(), parse_mode="HTML")
     dp = Dispatcher()
     db = DataBase()
+
+    #dp.message.filter(UrlInMessageCheck()) # Фильтр на проверку ссылки в тексте.
 
     dp.startup.register(db.create) # Создаем БД при запуске бота.
     dp.include_routers(
         handlers.questrionaire.router,
+        handlers.search_user.router,
         handlers.bot_messages.router
     )
 

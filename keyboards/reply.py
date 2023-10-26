@@ -5,6 +5,9 @@ main = ReplyKeyboardMarkup(
         [
             KeyboardButton(text="Моя анкета"),
             KeyboardButton(text="Статистика")
+        ],
+        [
+            KeyboardButton(text="Начать поиск")
         ]
     ],
     resize_keyboard=True,
